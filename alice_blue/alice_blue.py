@@ -389,12 +389,12 @@ class AliceBlue:
             self.__ws_send(json.dumps(heart_beat), opcode = websocket._abnf.ABNF.OPCODE_PING)
 
     def __ws_run_forever(self):
-        while True:
-            try:
-                self.__websocket.run_forever()
-            except Exception as e:
-                logger.warning(f"websocket run forever ended in exception, {e}")
-            sleep(0.1) # Sleep for 100ms between reconnection.
+        # while True:
+        try:
+            self.__websocket.run_forever()
+        except Exception as e:
+            logger.warning(f"websocket run forever ended in exception, {e}")
+        sleep(0.1) # Sleep for 100ms between reconnection.
 
     def __ws_send(self, *args, **kwargs):
         while self.__websocket_connected == False:
@@ -431,10 +431,12 @@ class AliceBlue:
                                                 on_close=self.__on_close_callback,
                                                 on_open=self.__on_open_callback)
         th = threading.Thread(target=self.__send_heartbeat)
+        th.name = 'HeartbeatThread'
         th.daemon = True
         th.start()
         if run_in_background is True:
             self.__ws_thread = threading.Thread(target=self.__ws_run_forever)
+            self.__ws_thread.name = 'BackgroundSocketThread'
             self.__ws_thread.daemon = True
             self.__ws_thread.start()
         else:
@@ -761,7 +763,7 @@ class AliceBlue:
         data = json.dumps({'a' : 'subscribe', 'v' : arr, 'm' : mode})
         return self.__ws_send(data)
 
-    def unsubscribe(self, instrument, live_feed_type):
+    def unsubscribe(self, instrument, live_feed_type, close_connection=False):
         """ unsubscribe to the current feed of an instrument """
         if(type(live_feed_type) is not LiveFeedType):
             raise TypeError("Required parameter live_feed_type not of type LiveFeedType")
@@ -788,7 +790,10 @@ class AliceBlue:
         elif(live_feed_type == LiveFeedType.FULL_SNAPQUOTE):
             mode = 'full_snapquote' 
         data = json.dumps({'a' : 'unsubscribe', 'v' : arr, 'm' : mode})
-        return self.__ws_send(data)
+        ws_data = self.__ws_send(data)
+        if close_connection:
+            self.__websocket.close()
+        return ws_data
 
     def get_all_subscriptions(self):
         """ get the all subscribed instruments """
