@@ -509,7 +509,7 @@ class AliceBlue:
         return self.__enabled_exchanges
 
     def place_order(self, transaction_type, instrument, quantity, order_type,
-                    product_type, price=0.0, trigger_price=None,
+                    product_type, price=0.0, validity='DAY', trigger_price=None,
                     stop_loss=None, square_off=None, trailing_sl=None,
                     is_amo=False,
                     order_tag='order1'):
@@ -557,7 +557,7 @@ class AliceBlue:
                  'price': price,
                  'transaction_type': transaction_type.value,
                  'trigger_price': trigger_price,
-                 'validity': 'DAY',
+                 'validity': validity,
                  'product': prod_type,
                  'source': 'web',
                  'order_tag': order_tag}
